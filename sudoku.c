@@ -3,6 +3,7 @@
 #include <time.h>
 
 #define N 9
+
 int checkSquare(int rowStart, int colStart, int num);
 int checkRow(int x, int y, int num);
 int checkCol(int x, int y, int num);
@@ -10,6 +11,12 @@ int solveSudoku(int x, int y);
 void fillMatrix();
 void fillDiagonalBox();
 void fillThreeByThreeBox(int row, int col);
+void copyMatrix();
+int timer();
+void save();
+void load();
+void loadPlay();
+int score(int lives, int time_taken);
 
 int mat[N][N], copyMat[N][N];
 
@@ -154,15 +161,15 @@ int solveSudoku(int x, int y)
 
 void removeKDigits()
 {
-  int i, j, a = 9, b = 9, cellId;
+  int i, j, a = 9, b = 9, cell;
   srand(time(NULL));
 
   int count = 50;
   while (count != 0)
   {
-    cellId = rand();
-    i = (cellId / a) % a;
-    j = cellId % b;
+    cell = rand();
+    i = (cell / a) % a;
+    j = cell % b;
 
     if (mat[i][j] != 0)
     {
@@ -178,6 +185,7 @@ void fillMatrix()
 {
   fillDiagonalBox();
   solveSudoku(0, 0);
+  copyMatrix();
   removeKDigits();
 }
 
@@ -229,33 +237,45 @@ int matCompare()
 }
 void play()
 {
+  time_t seconds;
+  time_t seconds1;
+  seconds = time(NULL);
+
+  int lives = 3;
   fillMatrix();
   printSudoku();
-  copyMatrix();
+
   int row, col, num, moves = 300;
   char c;
-  while (moves != 0)
+  printf("Lives %d                           Time %d seconds\n", 3, 0);
+  while (lives != 0)
   {
-    printf("You have %d moves left\n", moves);
+    // printf("You have %d moves left\n", moves);
     printf("Enter the row, col, and the digit for your move-\n");
     scanf("%d%d%d", &row, &col, &num);
     if (!checkCol(row - 1, col - 1, num) && !checkRow(row - 1, col - 1, num) && !checkSquare(row - 1, col - 1, num))
     {
       mat[row - 1][col - 1] = num;
       printSudoku();
-      printf("Press 's' to submit or press 'Enter' to proceed.\n");
+      printf("Press 'P' to pause, 's' to submit or press 'Enter' to proceed.\n");
       getchar();
       c = getchar();
-      if (c == 's')
+      scanf("%c", &c);
+      if (c == 'P')
+      {
+        save();
+        break;
+      }
+      else if (c == 's')
       {
         if (matCompare() == 81)
         {
-          printf("Well Done!\nSuuuiDokuu!\n");
+          printf("     Well Done!\nSuuuiDokuu!\n");
         }
 
         else
         {
-          printf("Ops! Try again!\n");
+          printf("      Ops! Try again!\n");
         }
         break;
       }
@@ -263,35 +283,222 @@ void play()
     else
     {
       printf("Warning!!\n");
+      lives--;
       mat[row - 1][col - 1] = num;
       printSudoku();
-      printf("Press 's' to submit or press 'Enter' to proceed.\n");
+      if (lives > 0)
+      {
+        printf("Press 'P' to pause, 's' to submit or press 'Enter' to proceed.\n");
+
+        getchar();
+        c = getchar();
+        if (c == 'P')
+        {
+          save();
+          break;
+        }
+        else if (c == 's')
+        {
+          if (matCompare() == 81)
+          {
+            printf("     Well Done!\nSuuuiDokuu!\n");
+          }
+
+          else
+          {
+            printf("     Ops! Try again!\n");
+          }
+          break;
+        }
+      }
+    }
+    moves--;
+    seconds1 = time(NULL);
+    printf("Lives %d                           Time %d seconds\n", lives, seconds1 - seconds);
+  }
+  printf("         GAME OVER\n");
+}
+
+void takeInputgrid()
+{
+  printf("Give input grid:\n");
+  for (int i = 0; i < N; i++)
+  {
+    for (int j = 0; j < N; j++)
+    {
+      scanf("%d", &mat[i][j]);
+    }
+  }
+}
+
+int timer()
+{
+  time_t seconds;
+  seconds = time(NULL);
+  time_t seconds1;
+  seconds1 = time(NULL);
+  return seconds1 - seconds;
+}
+void save()
+{
+  FILE *file = fopen("file.txt", "w");
+  if (file == NULL)
+  {
+    return;
+  }
+  for (int i = 0; i < 9; i++)
+  {
+    for (int j = 0; j < 9; j++)
+    {
+      fprintf(file, "%d", mat[i][j]);
+      if (j < 9 - 1)
+      {
+        fprintf(file, " ");
+      }
+    }
+    fprintf(file, "\n");
+  }
+  fclose(file);
+}
+
+void loadPlay()
+{
+  time_t seconds;
+  time_t seconds1;
+  seconds = time(NULL);
+
+  int lives = 3;
+  // fillMatrix();
+  printSudoku();
+
+  int row, col, num, moves = 300;
+  char c;
+  printf("Lives %d                           Time %d seconds\n", 3, 0);
+  while (lives > 0)
+  {
+    // printf("You have %d moves left\n", moves);
+    printf("Enter the row, col, and the digit for your move-\n");
+    scanf("%d%d%d", &row, &col, &num);
+    if (!checkCol(row - 1, col - 1, num) && !checkRow(row - 1, col - 1, num) && !checkSquare(row - 1, col - 1, num))
+    {
+      mat[row - 1][col - 1] = num;
+      printSudoku();
+      printf("Press 'P' to pause, 's' to submit or press 'Enter' to proceed.\n");
       getchar();
       c = getchar();
-      if (c == 's')
+      scanf("%c", &c);
+      if (c == 'P')
+      {
+        save();
+        break;
+      }
+      else if (c == 's')
       {
         if (matCompare() == 81)
         {
-          printf("Well Done!\nSuuuiDokuu!\n");
+          printf("     Well Done!\nSuuuiDokuu!\n");
         }
 
         else
         {
-          printf("Ops! Try again!\n");
+          printf("      Ops! Try again!\n");
         }
         break;
       }
     }
-    moves--;
+    else
+    {
+      printf("Warning!!\n");
+      --lives;
+      mat[row - 1][col - 1] = num;
+      printSudoku();
+      if (lives > 0)
+      {
+        printf("Press 'P' to pause, 's' to submit or press 'Enter' to proceed.\n");
+        getchar();
+        c = getchar();
+        if (c == 'P')
+        {
+          save();
+          break;
+        }
+        else if (c == 's')
+        {
+          if (matCompare() == 81)
+          {
+            printf("     Well Done!\nSuuuiDokuu!\n");
+          }
+
+          else
+          {
+            printf("     Ops! Try again!\n");
+          }
+          break;
+        }
+      }
+    }
+    // moves--;
+    seconds1 = time(NULL);
+    printf("Lives %d                           Time %d seconds\n", lives, seconds1 - seconds);
   }
+  printf("         GAME OVER\n");
 }
-//test commit
+
+void load()
+{
+  int value;
+  FILE *file = fopen("file.txt", "r");
+  if (file == NULL)
+  {
+    return;
+  }
+  for (int i = 0; i < 9; i++)
+  {
+    for (int j = 0; j < 9; j++)
+    {
+      fscanf(file, "%d", &value);
+      mat[i][j] = value;
+    }
+  }
+
+  fclose(file);
+  loadPlay();
+}
+
+int score(int lives, int time_taken)
+{
+}
+
 int main()
 {
-  printSudoku();
-  fillMatrix();
-  printSudoku();
+  char choice;
+  printf("Press G For New Game\n");
+  printf("Press R to Resume\n");
+  scanf("%c", &choice);
+  switch (choice)
+  {
+  case 'G':
+    play();
+    break;
+  case 'R':
+    load();
+    break;
+  }
+  // save();
+  // printSudoku();
+  // fillMatrix();
+  // takeInputgrid();
+  // printSudoku();
   // play();
-  solveSudoku(0, 0);
-  printSudoku();
+  // printSudoku();
+  //   for(int i=0;i<9;i++){
+  //     for(int j=0;j<9;j++){
+  //       mat[i][j]=0;
+  //     }
+  //   }
+  // printSudoku();
+
+  // save();
+  // solveSudoku(0, 0);
+  // printSudoku();
 }
