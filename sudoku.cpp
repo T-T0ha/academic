@@ -1,11 +1,13 @@
+
 #include <bits/stdc++.h>
 #include <graphics.h>
 #define N 9
 using namespace std;
-int checkSquare(int rowStart, int colStart, int num);
-int checkRow(int x, int y, int num);
-int checkCol(int x, int y, int num);
-int solveSudoku(int x, int y);
+int checkSquare(int row, int col, int num);
+int checkRow(int row, int col, int num);
+int checkCol(int row, int col, int num);
+int solveSudoku(int row, int col);
+int solveDiagonalSudoku(int x, int y);
 void fillMatrix(char difficulty);
 void fillDiagonalBox();
 void fillThreeByThreeBox(int row, int col);
@@ -53,49 +55,118 @@ bool isValid(int row, int col, int num)
     return true;
 }
 
-int checkCol(int x, int y, int num)
+int checkCol(int row, int col, int num)
 {
   for (int i = 0; i < 9; i++)
   {
-    if (mat[x][i] == num)
+    if (mat[row][i] == num)
       return 1;
   }
   return 0;
 }
 
-int checkRow(int x, int y, int num)
+int checkRow(int row, int col, int num)
 {
   for (int i = 0; i < 9; i++)
   {
-    if (mat[i][y] == num)
+    if (mat[i][col] == num)
       return 1;
   }
   return 0;
 }
 
-int checkSquare(int x, int y, int num)
+int checkSquare(int row, int col, int num)
 {
-  if (x < 3)
-    x = 0;
-  else if (x < 6)
-    x = 3;
+  if (row < 3)
+    row = 0;
+  else if (row < 6)
+    row = 3;
   else
-    x = 6;
-  if (y < 3)
-    y = 0;
-  else if (y < 6)
-    y = 3;
+    row = 6;
+  if (col < 3)
+    col = 0;
+  else if (col < 6)
+    col = 3;
   else
-    y = 6;
-  for (int i = x; i < x + 3; i++)
+    col = 6;
+  for (int i = row; i < row + 3; i++)
   {
-    for (int j = y; j < y + 3; j++)
+    for (int j = col; j < col + 3; j++)
     {
       if (mat[i][j] == num)
       {
         return 1;
       }
     }
+  }
+  return 0;
+}
+
+void rotateMat(int x, int y)
+{
+  int temp, dummyMat[3][3];
+  for (int i = 0; i < 3; i++)
+  {
+
+    for (int j = 0; j < 3; j++)
+    {
+
+      dummyMat[i][j] = mat[j][i];
+    }
+  }
+  for (int i = 0; i < 3; i++)
+  {
+
+    for (int j = 0; j < 3; j++)
+    {
+      mat[i][j] = dummyMat[i][j];
+    }
+  }
+}
+
+int checkDiagonal(int x, int y, int num)
+{
+  int arr[8];
+  int k = 0;
+  for (int i = 0; i < 9; i++)
+  {
+    for (int j = 0; j < 9; j++)
+    {
+      if (i == j && i != x && j != y)
+      {
+        arr[k] = mat[i][j];
+        k++;
+      }
+    }
+  }
+  for (int i = 0; i < 8; i++)
+  {
+    if (arr[i] == num)
+      return 1;
+  }
+  return 0;
+}
+
+int checkDiagonalTheOtherOne(int x, int y, int num)
+{
+  int arr[8];
+  int k = 0;
+  for (int i = 0; i < 9; i++)
+  {
+    for (int j = 8; j >= 0; j--)
+    {
+      if (i + j == 8 && i != x && j != y)
+      {
+        arr[k] = mat[i][j];
+        k++;
+        break;
+      }
+    }
+  }
+  for (int i = 0; i < 8; i++)
+  {
+    if (arr[i] == num)
+      return 1;
   }
   return 0;
 }
@@ -125,11 +196,78 @@ void fillThreeByThreeBox(int row, int col)
 
 void fillDiagonalBox()
 {
-  for (int i = 0; i < N; i = i + 3)
-    fillThreeByThreeBox(i, i);
+  // for (int i = 0; i < N; i = i + 3)
+  fillThreeByThreeBox(0, 0);
+  rotateMat(0, 0);
+  fillThreeByThreeBox(6, 3);
 }
 
-int solveSudoku(int x, int y)
+int solveSudoku(int row, int col)
+{
+  int num = 9;
+  int tempx = 0;
+  int tempy = 0;
+  if (mat[row][col] != 0)
+  {
+    if (row == 8 && col == 8)
+    {
+      return 1;
+    }
+    if (row < 8)
+      row++;
+    else
+    {
+      if (col < 8)
+      {
+        row = 0;
+        col++;
+      }
+    }
+    if (solveSudoku(row, col))
+    {
+      return 1;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+  if (mat[row][col] == 0)
+  {
+    while (num > 0)
+    {
+      if (!checkCol(row, col, num) && !checkRow(row, col, num) && !checkSquare(row, col, num))
+      {
+        mat[row][col] = num;
+        if (row == 8 && col == 8)
+        {
+          return 1;
+        }
+        if (row < 8)
+        {
+          tempx = row + 1;
+        }
+        else
+        {
+          if (col < 8)
+          {
+            tempx = 0;
+            tempy = col + 1;
+          }
+        }
+        if (solveSudoku(tempx, tempy))
+        {
+          return 1;
+        }
+      }
+      num--;
+    }
+    mat[row][col] = 0;
+    return 0;
+  }
+}
+
+int solveDiagonalSudoku(int x, int y)
 {
   int num = 9;
   int tempx = 0;
@@ -150,7 +288,7 @@ int solveSudoku(int x, int y)
         y++;
       }
     }
-    if (solveSudoku(x, y))
+    if (solveDiagonalSudoku(x, y))
     {
       return 1;
     }
@@ -163,28 +301,112 @@ int solveSudoku(int x, int y)
   {
     while (num > 0)
     {
-      if (!checkCol(x, y, num) && !checkRow(x, y, num) && !checkSquare(x, y, num))
+      if (x == y && x != 4)
       {
-        mat[x][y] = num;
-        if (x == 8 && y == 8)
+        if (!checkCol(x, y, num) && !checkRow(x, y, num) && !checkSquare(x, y, num) && !checkDiagonal(x, y, num))
         {
-          return 1;
-        }
-        if (x < 8)
-        {
-          tempx = x + 1;
-        }
-        else
-        {
-          if (y < 8)
+          mat[x][y] = num;
+          if (x == 8 && y == 8)
           {
-            tempx = 0;
-            tempy = y + 1;
+            return 1;
+          }
+          if (x < 8)
+          {
+            tempx = x + 1;
+          }
+          else
+          {
+            if (y < 8)
+            {
+              tempx = 0;
+              tempy = y + 1;
+            }
+          }
+          if (solveDiagonalSudoku(tempx, tempy))
+          {
+            return 1;
           }
         }
-        if (solveSudoku(tempx, tempy))
+      }
+      else if ((x == 0 && y == 8) || (x == 1 && y == 7) || (x == 2 && y == 6) || (x == 3 && y == 5) || (x == 5 && y == 3) || (x == 6 && y == 2) || (x == 7 && y == 1) || (x == 8 && y == 0))
+      {
+        if (!checkCol(x, y, num) && !checkRow(x, y, num) && !checkSquare(x, y, num) && !checkDiagonalTheOtherOne(x, y, num))
         {
-          return 1;
+          mat[x][y] = num;
+          if (x == 8 && y == 8)
+          {
+            return 1;
+          }
+          if (x < 8)
+          {
+            tempx = x + 1;
+          }
+          else
+          {
+            if (y < 8)
+            {
+              tempx = 0;
+              tempy = y + 1;
+            }
+          }
+          if (solveDiagonalSudoku(tempx, tempy))
+          {
+            return 1;
+          }
+        }
+      }
+      else if ((x == 4 && y == 4))
+      {
+        if (!checkCol(x, y, num) && !checkRow(x, y, num) && !checkSquare(x, y, num) && !checkDiagonal(x, y, num) && !checkDiagonalTheOtherOne(x, y, num))
+        {
+          mat[x][y] = num;
+          if (x == 8 && y == 8)
+          {
+            return 1;
+          }
+          if (x < 8)
+          {
+            tempx = x + 1;
+          }
+          else
+          {
+            if (y < 8)
+            {
+              tempx = 0;
+              tempy = y + 1;
+            }
+          }
+          if (solveDiagonalSudoku(tempx, tempy))
+          {
+            return 1;
+          }
+        }
+      }
+      else
+      {
+        if (!checkCol(x, y, num) && !checkRow(x, y, num) && !checkSquare(x, y, num))
+        {
+          mat[x][y] = num;
+          if (x == 8 && y == 8)
+          {
+            return 1;
+          }
+          if (x < 8)
+          {
+            tempx = x + 1;
+          }
+          else
+          {
+            if (y < 8)
+            {
+              tempx = 0;
+              tempy = y + 1;
+            }
+          }
+          if (solveDiagonalSudoku(tempx, tempy))
+          {
+            return 1;
+          }
         }
       }
       num--;
@@ -204,7 +426,9 @@ void removeKDigits(char difficulty)
   else if (difficulty == '2')
     count = 45;
   else if (difficulty == '3')
-    count = 65;
+    count = 60;
+  else if (difficulty == '4')
+    count = 60;
 
   while (count != 0)
   {
@@ -224,11 +448,23 @@ void removeKDigits(char difficulty)
 
 void fillMatrix(char difficulty)
 {
-  fillDiagonalBox();
-  solveSudoku(0, 0);
-  copyMatrix(mat, solution);
-  removeKDigits(difficulty);
-  copyMatrix(mat, locked);
+  if (difficulty == '4')
+  {
+    cout << "Running";
+    fillDiagonalBox();
+    int x = solveDiagonalSudoku(0, 0);
+    copyMatrix(mat, solution);
+    removeKDigits(difficulty);
+    copyMatrix(mat, locked);
+  }
+  else
+  {
+    fillDiagonalBox();
+    solveSudoku(0, 0);
+    copyMatrix(mat, solution);
+    removeKDigits(difficulty);
+    copyMatrix(mat, locked);
+  }
 }
 
 void printSudoku()
@@ -321,11 +557,10 @@ void saveGame(int gameNum, int time)
     lockedfile = "txt/locks/locked3.txt";
   }
 
-  writeToFile(gamefile, mat, time);        
-  writeToFile(solutionfile, solution, time); 
-  writeToFile(lockedfile, locked, time);    
+  writeToFile(gamefile, mat, time);
+  writeToFile(solutionfile, solution, time);
+  writeToFile(lockedfile, locked, time);
 }
-
 
 int loadGame(int gameNum)
 {
@@ -349,7 +584,7 @@ int loadGame(int gameNum)
     lockedfile = "txt/locks/locked3.txt";
   }
 
-  bool notEmpty = false; 
+  bool notEmpty = false;
   ifstream GameFile(gamefile);
   int time;
   for (int r = 0; r < 9 && !GameFile.eof(); r++)
@@ -358,7 +593,7 @@ int loadGame(int gameNum)
       notEmpty = true;
     for (int c = 0; c < 9; c++)
     {
-      GameFile >> mat[r][c]; 
+      GameFile >> mat[r][c];
     }
   }
   GameFile >> time;
@@ -366,8 +601,8 @@ int loadGame(int gameNum)
   if (!notEmpty)
     return notEmpty;
   // int tim;
-  readFromFile(solutionfile, solution); 
-  readFromFile(lockedfile, locked);     
+  readFromFile(solutionfile, solution);
+  readFromFile(lockedfile, locked);
   return time;
 }
 
@@ -378,8 +613,10 @@ void highScore(int newTime, char difficulty)
     filename = "txt/scores/easy.txt";
   else if (difficulty == '2')
     filename = "txt/scores/mid.txt";
+  else if (difficulty == '3')
+    filename = "txt/scores/hard.txt";
   else
-    filename = "txt/scores/easy.txt";
+    filename = "txt/scores/master.txt";
   ifstream inputFile(filename);
   vector<int> integers;
   int prevTime;
@@ -407,8 +644,10 @@ void getHighScore(char difficulty)
     filename = "txt/scores/easy.txt";
   else if (difficulty == '2')
     filename = "txt/scores/mid.txt";
+  else if (difficulty == '3')
+    filename = "txt/scores/hard.txt";
   else
-    filename = "txt/scores/easy.txt";
+    filename = "txt/scores/master.txt";
   ifstream fileObj(filename);
   for (int i = 0; i < 3; i++)
   {
@@ -416,8 +655,6 @@ void getHighScore(char difficulty)
   }
   fileObj.close();
 }
-
-
 
 void writeToFile(string filepath, int arr[][N], int time)
 {
@@ -592,7 +829,7 @@ char inputGridInfo(int &activex, int &activey, int &tempx, int &tempy)
   matInitialization();
   bool game = true;
 
-  //cout << "runnin";
+  // cout << "runnin";
   displayGameScreenForInput(activex, activey);
   // int tempx = -1, tempy = -1;
   while (game)
@@ -651,7 +888,7 @@ void displayGameScreenForInput(const int &activex, const int &activey)
   int gridStartX = midx - 153;
   int gridStartY = midy - 153;
   setcolor(LIGHTBLUE);
-  //lines
+  // lines
   for (int i = gridStartX, count = 0; i <= gridStartX + 306; i += 34, count++)
   {
     if (count % 3 == 0)
@@ -713,7 +950,7 @@ void displayGameScreen(const int &activex, const int &activey, int time, int sav
   int gridStartY = midy - 153;
   // gridwidth=306 cause 306 is can be devided by 9
   setcolor(LIGHTBLUE);
-  
+
   for (int i = gridStartX, count = 0; i <= gridStartX + 306; i += 34, count++)
   {
     if (count % 3 == 0)
@@ -722,7 +959,7 @@ void displayGameScreen(const int &activex, const int &activey, int time, int sav
       setlinestyle(0, 0, 1);
     line(i, gridStartY, i, gridStartY + 306);
   }
- 
+
   for (int i = gridStartY, count = 0; i <= gridStartY + 306; i += 34, count++)
   {
     if (count % 3 == 0)
@@ -800,9 +1037,10 @@ char difficultyscreen()
   outtextxy(midx - textwidth("Press 1 for Easy") / 2, midy - 25, "Press 1 for Easy");
   outtextxy(midx - textwidth("Press 2 for Medium") / 2, midy, "Press 2 for Medium");
   outtextxy(midx - textwidth("Press 3 for Hard") / 2, midy + 25, "Press 3 for Hard");
-  
+  outtextxy(midx - textwidth("Press 4 for Master(Diagonal)") / 2, midy + 50, "Press 4 for Master(Diagonal)");
+
   char key = getch();
-  while (!(key == '1') && !(key == '2') && !(key == '3'))
+  while (!(key == '1') && !(key == '2') && !(key == '3') && !(key == '4'))
   {
     key = getch();
   }
@@ -838,10 +1076,9 @@ char winningScreen(int time)
   return key;
 }
 
-
 void navigate(const int &keyPressed, int &activex, int &activey, int &tempx, int &tempy)
 {
-  
+
   int gridStartX = getmaxx() / 2 - 153;
   int gridStartY = getmaxy() / 2 - 153;
 
@@ -855,34 +1092,34 @@ void navigate(const int &keyPressed, int &activex, int &activey, int &tempx, int
   }
 
   if (keyPressed == 72)
-  { 
+  {
     if (activey == 0)
       activey = 8;
     else
       activey--;
   }
   else if (keyPressed == 80)
-  { 
+  {
     if (activey == 8)
       activey = 0;
     else
       activey++;
   }
   else if (keyPressed == 75)
-  { 
+  {
     if (activex == 0)
       activex = 8;
     else
       activex--;
   }
   else if (keyPressed == 77)
-  { 
+  {
     if (activex == 8)
       activex = 0;
     else
       activex++;
   }
- 
+
   setcolor(YELLOW);
   setlinestyle(0, 0, 3);
   tempx = activex;
@@ -909,7 +1146,7 @@ char highscoreScreen()
   line(0, 2, getmaxx(), 2);
   rectangle(0, 0, getmaxx(), getmaxy());
   char msg[50], elem[3];
-  
+
   setcolor(LIGHTBLUE);
   settextstyle(SIMPLEX_FONT, HORIZ_DIR, 5);
   outtextxy(midx - (textwidth("SUDOKU") / 2), 20, "SUDOKU");
@@ -963,7 +1200,7 @@ int main()
     // menu
     action = menuScreen();
     if ((int)action == 27)
-    { 
+    {
       game = false;
       program = false;
     }
@@ -974,10 +1211,9 @@ int main()
       tim2 = loadingScreen();
       // cout<<time;
       if (game)
-
         displayGameScreen(activex, activey, tim2, 0);
     }
-    //new game
+    // new game
     else if (action == 'n')
     {
       matInitialization();
@@ -1036,13 +1272,13 @@ int main()
         tim = (seconds2 - seconds1);
         // cout<<"Time after--"<<tim<<endl;
         // tim2=0;
-        //esc to exit
+        // esc to exit
         if (int(keyPress) == 27)
         {
           game = false;
           program = false;
         }
-        //arrow key
+        // arrow key
         else if (keyPress == 72 || keyPress == 80 || keyPress == 75 || keyPress == 77)
         {
           navigate(keyPress, activex, activey, tempx, tempy);
@@ -1050,7 +1286,7 @@ int main()
         else if (keyPress >= 49 && keyPress <= 57)
         {
 
-          //deny input in locked
+          // deny input in locked
           if (locked[activey][activex] == 0)
           {
             int digit = keyPress - 48;
@@ -1058,13 +1294,13 @@ int main()
             displayGameScreen(activex, activey, tim, tim2);
           }
         }
-        //save
+        // save
         else if (keyPress == 's')
         {
           tim = tim + tim2;
           game = !savingScreen(tim);
         }
-        //menu
+        // menu
         else if (keyPress == 'm')
           game = false;
 
@@ -1100,3 +1336,4 @@ int main()
   closegraph();
   return 0;
 }
+
